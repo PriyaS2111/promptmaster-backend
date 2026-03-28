@@ -19,5 +19,5 @@ def evaluate_rules(prompt: str):
 
     return {
         "rule_score": score,
-        "max_rule_score": 7
+        "max_rule_score": 10
     }
