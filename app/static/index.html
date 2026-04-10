@@ -1,0 +1,1259 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PromptMaster AI</title>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Space+Mono:wght@400;700&family=Rajdhani:wght@300;400;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg-deep: #030712;
+    --bg-card: rgba(15, 23, 42, 0.8);
+    --bg-glass: rgba(255,255,255,0.04);
+    --neon-cyan: #00f5ff;
+    --neon-purple: #bf5af2;
+    --neon-green: #00ff87;
+    --neon-orange: #ff6b35;
+    --neon-pink: #ff2d78;
+    --text-primary: #e2e8f0;
+    --text-muted: #64748b;
+    --border-glow: rgba(0,245,255,0.2);
+    --beginner: #00ff87;
+    --intermediate: #fbbf24;
+    --advanced: #ff2d78;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body {
+    font-family: 'Rajdhani', sans-serif;
+    background: var(--bg-deep);
+    color: var(--text-primary);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+  /* Animated background grid */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(0,245,255,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0,245,255,0.03) 1px, transparent 1px);
+    background-size: 50px 50px;
+    pointer-events: none;
+    z-index: 0;
+  }
+  body::after {
+    content: '';
+    position: fixed;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(ellipse at 30% 20%, rgba(191,90,242,0.08) 0%, transparent 50%),
+                radial-gradient(ellipse at 70% 80%, rgba(0,245,255,0.06) 0%, transparent 50%);
+    pointer-events: none;
+    z-index: 0;
+    animation: bgPulse 8s ease-in-out infinite alternate;
+  }
+  @keyframes bgPulse {
+    0% { opacity: 0.6; transform: scale(1); }
+    100% { opacity: 1; transform: scale(1.05); }
+  }
+
+  .app { position: relative; z-index: 1; min-height: 100vh; display: flex; flex-direction: column; }
+
+  /* NAV */
+  nav {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 16px 24px;
+    background: rgba(3,7,18,0.9);
+    backdrop-filter: blur(20px);
+    border-bottom: 1px solid var(--border-glow);
+    position: sticky; top: 0; z-index: 100;
+  }
+  .logo {
+    font-family: 'Orbitron', monospace;
+    font-size: 18px; font-weight: 900;
+    background: linear-gradient(135deg, var(--neon-cyan), var(--neon-purple));
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    letter-spacing: 2px;
+  }
+  .logo span { font-size: 10px; display: block; letter-spacing: 4px; font-weight: 400; opacity: 0.7; }
+  .nav-right { display: flex; align-items: center; gap: 12px; }
+  .xp-badge {
+    display: flex; align-items: center; gap: 6px;
+    background: rgba(0,255,135,0.1);
+    border: 1px solid rgba(0,255,135,0.3);
+    border-radius: 20px;
+    padding: 4px 12px;
+    font-family: 'Space Mono', monospace;
+    font-size: 12px; color: var(--neon-green);
+  }
+  .streak-badge {
+    display: flex; align-items: center; gap: 6px;
+    background: rgba(255,107,53,0.1);
+    border: 1px solid rgba(255,107,53,0.3);
+    border-radius: 20px;
+    padding: 4px 12px;
+    font-family: 'Space Mono', monospace;
+    font-size: 12px; color: var(--neon-orange);
+  }
+  .user-avatar {
+    width: 36px; height: 36px; border-radius: 50%;
+    background: linear-gradient(135deg, var(--neon-cyan), var(--neon-purple));
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Orbitron', monospace; font-size: 13px; font-weight: 700;
+    cursor: pointer;
+  }
+
+  /* MAIN */
+  main { flex: 1; padding: 24px; max-width: 900px; margin: 0 auto; width: 100%; }
+
+  /* SCREEN TRANSITIONS */
+  .screen { display: none; animation: fadeIn 0.3s ease; }
+  .screen.active { display: block; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+  /* DASHBOARD */
+  .dashboard-header { text-align: center; margin-bottom: 32px; }
+  .dashboard-header h1 {
+    font-family: 'Orbitron', monospace;
+    font-size: clamp(24px, 5vw, 40px);
+    font-weight: 900;
+    background: linear-gradient(135deg, var(--neon-cyan) 0%, var(--neon-purple) 50%, var(--neon-pink) 100%);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    line-height: 1.2; margin-bottom: 8px;
+  }
+  .dashboard-header p { color: var(--text-muted); font-size: 16px; letter-spacing: 1px; }
+
+  .stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 24px; }
+  .stat-card {
+    background: var(--bg-glass);
+    border: 1px solid var(--border-glow);
+    border-radius: 12px;
+    padding: 16px;
+    text-align: center;
+    backdrop-filter: blur(10px);
+    transition: transform 0.2s, border-color 0.2s;
+  }
+  .stat-card:hover { transform: translateY(-2px); border-color: var(--neon-cyan); }
+  .stat-value { font-family: 'Orbitron', monospace; font-size: 28px; font-weight: 700; }
+  .stat-label { font-size: 11px; color: var(--text-muted); letter-spacing: 2px; text-transform: uppercase; margin-top: 4px; }
+
+  /* LEVEL CARDS */
+  .levels-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px; margin-bottom: 24px; }
+  .level-card {
+    background: var(--bg-glass);
+    border-radius: 16px;
+    padding: 24px;
+    border: 1px solid transparent;
+    cursor: pointer;
+    transition: all 0.3s;
+    position: relative;
+    overflow: hidden;
+    backdrop-filter: blur(10px);
+  }
+  .level-card::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: 16px;
+    padding: 1px;
+    background: linear-gradient(135deg, var(--card-color), transparent);
+    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    opacity: 0;
+    transition: opacity 0.3s;
+  }
+  .level-card:hover::before { opacity: 1; }
+  .level-card:hover { transform: translateY(-4px); box-shadow: 0 20px 40px rgba(0,0,0,0.4); }
+  .level-card.beginner { --card-color: var(--beginner); }
+  .level-card.intermediate { --card-color: var(--intermediate); }
+  .level-card.advanced { --card-color: var(--advanced); }
+  .level-card:hover.beginner { border-color: rgba(0,255,135,0.4); }
+  .level-card:hover.intermediate { border-color: rgba(251,191,36,0.4); }
+  .level-card:hover.advanced { border-color: rgba(255,45,120,0.4); }
+
+  .level-dot {
+    width: 12px; height: 12px; border-radius: 50%;
+    display: inline-block; margin-right: 8px;
+    animation: pulse 2s infinite;
+  }
+  .beginner .level-dot { background: var(--beginner); box-shadow: 0 0 10px var(--beginner); }
+  .intermediate .level-dot { background: var(--intermediate); box-shadow: 0 0 10px var(--intermediate); }
+  .advanced .level-dot { background: var(--advanced); box-shadow: 0 0 10px var(--advanced); }
+  @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.5; } }
+
+  .level-icon { font-size: 40px; margin-bottom: 12px; display: block; }
+  .level-title { font-family: 'Orbitron', monospace; font-size: 16px; font-weight: 700; margin-bottom: 8px; display: flex; align-items: center; }
+  .level-desc { font-size: 13px; color: var(--text-muted); line-height: 1.5; margin-bottom: 16px; }
+  .level-features { display: flex; flex-direction: column; gap: 6px; }
+  .level-feature { font-size: 12px; display: flex; align-items: center; gap: 6px; }
+  .level-feature::before { content: '→'; color: var(--card-color); }
+
+  /* PLAYGROUND */
+  .playground-header { display: flex; align-items: center; gap: 12px; margin-bottom: 24px; }
+  .back-btn {
+    background: var(--bg-glass); border: 1px solid var(--border-glow);
+    color: var(--text-primary); padding: 8px 16px; border-radius: 8px;
+    cursor: pointer; font-family: 'Rajdhani', sans-serif;
+    font-size: 14px; transition: all 0.2s;
+  }
+  .back-btn:hover { border-color: var(--neon-cyan); color: var(--neon-cyan); }
+  .level-badge {
+    padding: 4px 14px; border-radius: 20px;
+    font-size: 12px; font-family: 'Space Mono', monospace;
+    letter-spacing: 1px; text-transform: uppercase;
+  }
+  .badge-beginner { background: rgba(0,255,135,0.15); color: var(--beginner); border: 1px solid rgba(0,255,135,0.3); }
+  .badge-intermediate { background: rgba(251,191,36,0.15); color: var(--intermediate); border: 1px solid rgba(251,191,36,0.3); }
+  .badge-advanced { background: rgba(255,45,120,0.15); color: var(--advanced); border: 1px solid rgba(255,45,120,0.3); }
+
+  /* PROMPT INPUT AREA */
+  .prompt-area {
+    background: var(--bg-glass);
+    border: 1px solid var(--border-glow);
+    border-radius: 16px;
+    padding: 20px;
+    margin-bottom: 16px;
+    backdrop-filter: blur(10px);
+  }
+  .prompt-area label { font-size: 13px; color: var(--neon-cyan); letter-spacing: 2px; text-transform: uppercase; display: block; margin-bottom: 10px; font-family: 'Space Mono', monospace; }
+  textarea {
+    width: 100%; background: rgba(0,0,0,0.4);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 10px; color: var(--text-primary);
+    font-family: 'Space Mono', monospace; font-size: 14px;
+    line-height: 1.6; padding: 14px; resize: vertical;
+    min-height: 120px; transition: border-color 0.2s;
+  }
+  textarea:focus { outline: none; border-color: var(--neon-cyan); box-shadow: 0 0 20px rgba(0,245,255,0.1); }
+  textarea::placeholder { color: var(--text-muted); }
+
+  /* SENTENCE BUILDER (Intermediate) */
+  .sentence-builder { display: flex; flex-direction: column; gap: 12px; margin-bottom: 12px; }
+  .sentence-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+  .sentence-label {
+    font-family: 'Space Mono', monospace;
+    font-size: 13px; color: var(--neon-purple); white-space: nowrap;
+    min-width: 120px;
+  }
+  .sentence-input {
+    flex: 1; min-width: 200px;
+    background: rgba(0,0,0,0.4);
+    border: 1px solid rgba(191,90,242,0.3);
+    border-radius: 8px; color: var(--text-primary);
+    font-family: 'Space Mono', monospace; font-size: 13px;
+    padding: 10px 12px; transition: border-color 0.2s;
+  }
+  .sentence-input:focus { outline: none; border-color: var(--neon-purple); }
+
+  /* SCORING DIMENSIONS (Advanced) */
+  .dimensions-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 16px; }
+  .dimension-card {
+    background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.06);
+    border-radius: 10px; padding: 12px;
+  }
+  .dimension-label { font-size: 11px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 6px; }
+  .dimension-bar { height: 6px; background: rgba(255,255,255,0.1); border-radius: 3px; overflow: hidden; }
+  .dimension-fill { height: 100%; border-radius: 3px; transition: width 1s ease; }
+  .dimension-score { font-family: 'Orbitron', monospace; font-size: 16px; font-weight: 700; margin-top: 6px; }
+
+  /* SUBMIT BTN */
+  .submit-btn {
+    width: 100%;
+    background: linear-gradient(135deg, var(--neon-cyan), var(--neon-purple));
+    border: none; border-radius: 12px;
+    color: #000; font-family: 'Orbitron', monospace;
+    font-size: 14px; font-weight: 700; letter-spacing: 2px;
+    padding: 16px; cursor: pointer;
+    transition: all 0.3s; text-transform: uppercase;
+    position: relative; overflow: hidden;
+  }
+  .submit-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+  .submit-btn:not(:disabled):hover { transform: translateY(-2px); box-shadow: 0 8px 30px rgba(0,245,255,0.4); }
+  .submit-btn::after {
+    content: ''; position: absolute; inset: 0;
+    background: linear-gradient(135deg, rgba(255,255,255,0.2), transparent);
+    opacity: 0; transition: opacity 0.2s;
+  }
+  .submit-btn:not(:disabled):hover::after { opacity: 1; }
+
+  /* RESULTS */
+  .result-card {
+    background: var(--bg-glass);
+    border: 1px solid var(--border-glow);
+    border-radius: 16px; padding: 24px;
+    backdrop-filter: blur(10px);
+    animation: slideUp 0.4s ease;
+  }
+  @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+
+  .score-ring-container { display: flex; align-items: center; justify-content: center; margin: 20px 0; }
+  .score-ring {
+    width: 120px; height: 120px; position: relative;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .score-ring svg { position: absolute; top: 0; left: 0; transform: rotate(-90deg); }
+  .score-ring-value { text-align: center; }
+  .score-number { font-family: 'Orbitron', monospace; font-size: 36px; font-weight: 900; }
+  .score-label { font-size: 11px; color: var(--text-muted); letter-spacing: 2px; text-transform: uppercase; }
+
+  .feedback-section { margin-top: 20px; }
+  .feedback-section h3 { font-family: 'Space Mono', monospace; font-size: 13px; color: var(--neon-cyan); letter-spacing: 2px; text-transform: uppercase; margin-bottom: 12px; }
+  .feedback-item {
+    display: flex; align-items: flex-start; gap: 10px;
+    padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.05);
+    font-size: 14px; line-height: 1.5; color: var(--text-primary);
+  }
+  .feedback-item:last-child { border-bottom: none; }
+  .feedback-icon { font-size: 16px; flex-shrink: 0; margin-top: 1px; }
+
+  .improved-prompt {
+    background: rgba(0,255,135,0.05);
+    border: 1px solid rgba(0,255,135,0.2);
+    border-radius: 10px; padding: 14px;
+    font-family: 'Space Mono', monospace; font-size: 12px;
+    line-height: 1.6; color: var(--text-primary); margin-top: 12px;
+    white-space: pre-wrap;
+  }
+
+  .xp-gained {
+    display: inline-flex; align-items: center; gap: 6px;
+    background: rgba(0,255,135,0.15); border: 1px solid rgba(0,255,135,0.3);
+    border-radius: 20px; padding: 6px 16px;
+    font-family: 'Orbitron', monospace; font-size: 14px; color: var(--neon-green);
+    animation: xpPop 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  }
+  @keyframes xpPop { from { transform: scale(0.5); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+
+  .retry-btn {
+    background: rgba(255,45,120,0.1);
+    border: 1px solid rgba(255,45,120,0.3);
+    color: var(--advanced);
+    padding: 12px 24px; border-radius: 10px;
+    font-family: 'Rajdhani', sans-serif; font-size: 15px;
+    cursor: pointer; transition: all 0.2s;
+    margin-top: 12px; width: 100%;
+  }
+  .retry-btn:hover { background: rgba(255,45,120,0.2); }
+
+  /* LOADING */
+  .loading-overlay {
+    display: none;
+    flex-direction: column; align-items: center; justify-content: center;
+    gap: 16px; padding: 40px;
+  }
+  .loading-overlay.active { display: flex; }
+  .neural-loader {
+    width: 60px; height: 60px;
+    border: 2px solid rgba(0,245,255,0.2);
+    border-top-color: var(--neon-cyan);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .loading-text { font-family: 'Space Mono', monospace; font-size: 13px; color: var(--text-muted); letter-spacing: 1px; }
+
+  /* LEADERBOARD */
+  .leaderboard-item {
+    display: flex; align-items: center; gap: 12px;
+    padding: 12px 16px;
+    background: var(--bg-glass); border: 1px solid var(--border-glow);
+    border-radius: 10px; margin-bottom: 8px;
+    transition: all 0.2s;
+  }
+  .leaderboard-item:hover { border-color: var(--neon-cyan); transform: translateX(4px); }
+  .rank { font-family: 'Orbitron', monospace; font-size: 16px; font-weight: 700; width: 30px; }
+  .rank.gold { color: #ffd700; }
+  .rank.silver { color: #c0c0c0; }
+  .rank.bronze { color: #cd7f32; }
+  .lb-name { flex: 1; font-weight: 600; }
+  .lb-xp { font-family: 'Space Mono', monospace; font-size: 12px; color: var(--neon-green); }
+
+  /* BOTTOM NAV */
+  .bottom-nav {
+    display: flex; justify-content: space-around; align-items: center;
+    padding: 12px 24px; background: rgba(3,7,18,0.95);
+    backdrop-filter: blur(20px);
+    border-top: 1px solid var(--border-glow);
+    position: sticky; bottom: 0; z-index: 100;
+  }
+  .nav-item {
+    display: flex; flex-direction: column; align-items: center; gap: 4px;
+    cursor: pointer; padding: 6px 12px; border-radius: 10px;
+    transition: all 0.2s; color: var(--text-muted); font-size: 11px; letter-spacing: 1px;
+  }
+  .nav-item:hover, .nav-item.active { color: var(--neon-cyan); background: rgba(0,245,255,0.05); }
+  .nav-icon { font-size: 20px; }
+
+  /* SECTION HEADERS */
+  .section-title {
+    font-family: 'Orbitron', monospace; font-size: 14px; font-weight: 700;
+    color: var(--neon-cyan); letter-spacing: 3px; text-transform: uppercase;
+    display: flex; align-items: center; gap: 8px; margin-bottom: 16px;
+  }
+  .section-title::after { content: ''; flex: 1; height: 1px; background: var(--border-glow); }
+
+  /* COMPARISON (Advanced) */
+  .comparison-container { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 16px; }
+  .compare-card { background: rgba(0,0,0,0.3); border-radius: 10px; padding: 14px; }
+  .compare-card h4 { font-size: 12px; color: var(--text-muted); letter-spacing: 1px; text-transform: uppercase; margin-bottom: 8px; }
+  .improvement-pct { text-align: center; padding: 12px; }
+  .improvement-pct .pct { font-family: 'Orbitron', monospace; font-size: 40px; font-weight: 900; color: var(--neon-green); }
+
+  /* Scrollbar */
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: rgba(0,245,255,0.3); border-radius: 3px; }
+
+  .error-msg { color: var(--neon-orange); font-size: 13px; padding: 10px; background: rgba(255,107,53,0.1); border-radius: 8px; margin-top: 8px; }
+  .result-card:hover {
+  box-shadow: 0 0 30px rgba(0,245,255,0.2);
+  transition: 0.3s;
+}
+.particles {
+  position: fixed;
+  inset: 0;
+  overflow: hidden;
+  z-index: 0;
+}
+
+.particles span {
+  position: absolute;
+  width: 4px;
+  height: 4px;
+  background: rgba(0,245,255,0.4);
+  border-radius: 50%;
+  animation: float 10s linear infinite;
+}
+
+@keyframes float {
+  from {
+    transform: translateY(100vh);
+  }
+  to {
+    transform: translateY(-10vh);
+  }
+}
+</style>
+</head>
+<body>
+<div class="particles"></div>
+<div class="app">
+  <!-- NAV -->
+  <nav>
+    <div class="logo">PromptMaster<span>AI PLATFORM</span></div>
+    <div class="nav-right">
+      <div class="xp-badge">⚡ <span id="nav-xp">0</span> XP</div>
+      <div class="streak-badge">🔥 <span id="nav-streak">0</span>d</div>
+      <div class="user-avatar">PM</div>
+    </div>
+  </nav>
+
+  <!-- MAIN -->
+  <main>
+    <!-- DASHBOARD -->
+    <div id="screen-dashboard" class="screen active">
+      <div class="dashboard-header">
+        <h1>Master Prompt Engineering</h1>
+        <p>Learn · Practice · Evolve · Dominate</p>
+      </div>
+
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-value" style="color:var(--neon-cyan)" id="stat-prompts">0</div>
+          <div class="stat-label">Prompts Crafted</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value" style="color:var(--neon-green)" id="stat-avg">—</div>
+          <div class="stat-label">Avg Score</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value" style="color:var(--neon-purple)" id="stat-best">—</div>
+          <div class="stat-label">Best Score</div>
+        </div>
+      </div>
+
+      <div class="section-title">Choose Your Level</div>
+      <div class="levels-grid">
+        <div class="level-card beginner" onclick="openPlayground('beginner')">
+          <span class="level-icon">🟢</span>
+          <div class="level-title"><span class="level-dot"></span>BEGINNER</div>
+          <div class="level-desc">Master the fundamentals of prompt construction. Learn clarity, context, and intent.</div>
+          <div class="level-features">
+            <div class="level-feature">AI Score (1–10)</div>
+            <div class="level-feature">Basic Feedback</div>
+            <div class="level-feature">One-Shot Evaluation</div>
+          </div>
+        </div>
+        <div class="level-card intermediate" onclick="openPlayground('intermediate')">
+          <span class="level-icon">🟡</span>
+          <div class="level-title"><span class="level-dot"></span>INTERMEDIATE</div>
+          <div class="level-desc">Structure prompts with roles, goals, and constraints using a guided template system.</div>
+          <div class="level-features">
+            <div class="level-feature">Sentence Builder</div>
+            <div class="level-feature">Role + Goal + Constraints</div>
+            <div class="level-feature">AI Suggestions</div>
+          </div>
+        </div>
+        <div class="level-card advanced" onclick="openPlayground('advanced')">
+          <span class="level-icon">🔴</span>
+          <div class="level-title"><span class="level-dot"></span>ADVANCED</div>
+          <div class="level-desc">Multi-dimensional analysis with retry loops, comparison engine, and AI optimization.</div>
+          <div class="level-features">
+            <div class="level-feature">4D Scoring Matrix</div>
+            <div class="level-feature">Unlimited Retries</div>
+            <div class="level-feature">Prompt Comparison</div>
+            <div class="level-feature">AI-Generated Optimized Prompt</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="section-title">Leaderboard</div>
+      <div id="leaderboard-list">
+        <div class="leaderboard-item">
+          <div class="rank gold">01</div>
+          <div class="user-avatar" style="width:30px;height:30px;font-size:11px">AK</div>
+          <div class="lb-name">Alex Kumar</div>
+          <div class="lb-xp">⚡ 2,840 XP</div>
+        </div>
+        <div class="leaderboard-item">
+          <div class="rank silver">02</div>
+          <div class="user-avatar" style="width:30px;height:30px;font-size:11px;background:linear-gradient(135deg,#bf5af2,#ff2d78)">SL</div>
+          <div class="lb-name">Sara Lee</div>
+          <div class="lb-xp">⚡ 2,310 XP</div>
+        </div>
+        <div class="leaderboard-item">
+          <div class="rank bronze">03</div>
+          <div class="user-avatar" style="width:30px;height:30px;font-size:11px;background:linear-gradient(135deg,#ff6b35,#fbbf24)">MR</div>
+          <div class="lb-name">Mike Ray</div>
+          <div class="lb-xp">⚡ 1,760 XP</div>
+        </div>
+        <div class="leaderboard-item" id="user-leaderboard-row" style="display:none;">
+          <div class="rank" style="color:var(--neon-cyan)">YOU</div>
+          <div class="user-avatar" style="width:30px;height:30px;font-size:11px">PM</div>
+          <div class="lb-name">You</div>
+          <div class="lb-xp">⚡ <span id="lb-user-xp">0</span> XP</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PLAYGROUND -->
+    <div id="screen-playground" class="screen">
+      <div class="playground-header">
+        <button class="back-btn" onclick="goBack()">← Back</button>
+        <div id="level-badge-display" class="level-badge"></div>
+        <div style="flex:1"></div>
+        <div id="pg-xp-display" class="xp-badge" style="font-size:11px">⚡ 0 XP</div>
+      </div>
+
+      <!-- BEGINNER UI -->
+      <div id="ui-beginner" style="display:none">
+        <div class="section-title">Prompt Playground</div>
+        <div class="prompt-area">
+          <label>Enter Your Prompt</label>
+          <textarea id="beginner-input" placeholder="Write a clear, specific prompt here. Be descriptive about what you want the AI to do...&#10;&#10;Example: 'Explain quantum entanglement to a 10-year-old using a simple analogy'"></textarea>
+        </div>
+        <button class="submit-btn" id="beginner-submit" onclick="evaluatePrompt('beginner')">
+          ⚡ Evaluate Prompt
+        </button>
+        <div id="beginner-error" class="error-msg" style="display:none"></div>
+      </div>
+
+      <!-- INTERMEDIATE UI -->
+      <div id="ui-intermediate" style="display:none">
+        <div class="section-title">Structured Prompt Builder</div>
+        <div class="prompt-area">
+          <label>Build Your Prompt</label>
+          <div class="sentence-builder">
+            <div class="sentence-row">
+              <div class="sentence-label">Act as →</div>
+              <input class="sentence-input" id="int-role" placeholder="a senior data scientist, a creative copywriter...">
+            </div>
+            <div class="sentence-row">
+              <div class="sentence-label">Your goal is →</div>
+              <input class="sentence-input" id="int-goal" placeholder="to analyze customer churn, to write viral ad copy...">
+            </div>
+            <div class="sentence-row">
+              <div class="sentence-label">Context →</div>
+              <input class="sentence-input" id="int-context" placeholder="for a B2B SaaS company with 10K users...">
+            </div>
+            <div class="sentence-row">
+              <div class="sentence-label">Constraints →</div>
+              <input class="sentence-input" id="int-constraints" placeholder="in under 200 words, using simple language...">
+            </div>
+          </div>
+          <div id="int-preview" style="padding:10px;background:rgba(191,90,242,0.05);border:1px solid rgba(191,90,242,0.2);border-radius:8px;font-family:'Space Mono',monospace;font-size:12px;color:var(--text-muted);min-height:40px;margin-top:8px"></div>
+        </div>
+        <button class="submit-btn" id="intermediate-submit" onclick="evaluatePrompt('intermediate')">
+          ⚡ Evaluate Structured Prompt
+        </button>
+        <div id="intermediate-error" class="error-msg" style="display:none"></div>
+      </div>
+
+      <!-- ADVANCED UI -->
+      <div id="ui-advanced" style="display:none">
+        <div class="section-title">Advanced Prompt Lab</div>
+        <div class="prompt-area">
+          <label>Craft Your Prompt</label>
+          <textarea id="advanced-input" placeholder="Write an advanced, well-structured prompt. Consider: role, context, constraints, output format, examples, edge cases...&#10;&#10;The more sophisticated your prompt, the higher your multi-dimensional score."></textarea>
+        </div>
+        <div id="adv-dimensions" class="dimensions-grid" style="display:none">
+          <div class="dimension-card">
+            <div class="dimension-label">Clarity</div>
+            <div class="dimension-bar"><div class="dimension-fill" id="dim-clarity" style="width:0%;background:var(--neon-cyan)"></div></div>
+            <div class="dimension-score" style="color:var(--neon-cyan)" id="dim-clarity-val">—</div>
+          </div>
+          <div class="dimension-card">
+            <div class="dimension-label">Context</div>
+            <div class="dimension-bar"><div class="dimension-fill" id="dim-context" style="width:0%;background:var(--neon-purple)"></div></div>
+            <div class="dimension-score" style="color:var(--neon-purple)" id="dim-context-val">—</div>
+          </div>
+          <div class="dimension-card">
+            <div class="dimension-label">Constraints</div>
+            <div class="dimension-bar"><div class="dimension-fill" id="dim-constraints" style="width:0%;background:var(--intermediate)"></div></div>
+            <div class="dimension-score" style="color:var(--intermediate)" id="dim-constraints-val">—</div>
+          </div>
+          <div class="dimension-card">
+            <div class="dimension-label">Output Format</div>
+            <div class="dimension-bar"><div class="dimension-fill" id="dim-format" style="width:0%;background:var(--neon-pink)"></div></div>
+            <div class="dimension-score" style="color:var(--neon-pink)" id="dim-format-val">—</div>
+          </div>
+        </div>
+        <button class="submit-btn" id="advanced-submit" onclick="evaluatePrompt('advanced')">
+          ⚡ Analyze Prompt
+        </button>
+        <div id="advanced-error" class="error-msg" style="display:none"></div>
+      </div>
+
+      <!-- LOADING -->
+      <div class="loading-overlay" id="loading-area">
+        <div class="neural-loader"></div>
+        <div class="loading-text" id="loading-text">ANALYZING NEURAL PATTERNS...</div>
+      </div>
+
+      <!-- RESULTS -->
+      <div id="result-area" style="display:none">
+        <div class="result-card">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
+            <div class="section-title" style="margin-bottom:0">Evaluation Result</div>
+            <div id="xp-gained-badge"></div>
+          </div>
+
+          <div class="score-ring-container">
+            <div class="score-ring">
+              <svg width="120" height="120" viewBox="0 0 120 120">
+                <circle cx="60" cy="60" r="52" fill="none" stroke="rgba(255,255,255,0.05)" stroke-width="8"/>
+                <circle cx="60" cy="60" r="52" fill="none" id="score-arc"
+                  stroke="var(--neon-cyan)" stroke-width="8"
+                  stroke-linecap="round" stroke-dasharray="326.7" stroke-dashoffset="326.7"
+                  style="transition: stroke-dashoffset 1.5s ease, stroke 0.5s"/>
+              </svg>
+              <div class="score-ring-value">
+                <div class="score-number" id="score-display" style="color:var(--neon-cyan)">0</div>
+                <div class="score-label">/ 10</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Advanced dimensions in result -->
+          <div id="result-dimensions" style="display:none" class="dimensions-grid">
+            <div class="dimension-card">
+              <div class="dimension-label">Clarity</div>
+              <div class="dimension-bar"><div class="dimension-fill" id="rdim-clarity" style="width:0%;background:var(--neon-cyan)"></div></div>
+              <div class="dimension-score" style="color:var(--neon-cyan)" id="rdim-clarity-val">—</div>
+            </div>
+            <div class="dimension-card">
+              <div class="dimension-label">Context</div>
+              <div class="dimension-bar"><div class="dimension-fill" id="rdim-context" style="width:0%;background:var(--neon-purple)"></div></div>
+              <div class="dimension-score" style="color:var(--neon-purple)" id="rdim-context-val">—</div>
+            </div>
+            <div class="dimension-card">
+              <div class="dimension-label">Constraints</div>
+              <div class="dimension-bar"><div class="dimension-fill" id="rdim-constraints" style="width:0%;background:var(--intermediate)"></div></div>
+              <div class="dimension-score" style="color:var(--intermediate)" id="rdim-constraints-val">—</div>
+            </div>
+            <div class="dimension-card">
+              <div class="dimension-label">Output Format</div>
+              <div class="dimension-bar"><div class="dimension-fill" id="rdim-format" style="width:0%;background:var(--neon-pink)"></div></div>
+              <div class="dimension-score" style="color:var(--neon-pink)" id="rdim-format-val">—</div>
+            </div>
+          </div>
+
+          <div class="feedback-section">
+            <h3>AI Feedback</h3>
+            <div id="feedback-list"></div>
+          </div>
+
+          <!-- Improved prompt -->
+          <div id="improved-section" style="display:none">
+            <div class="section-title" style="margin-top:20px">AI-Optimized Prompt</div>
+            <div class="improved-prompt" id="improved-prompt-text"></div>
+          </div>
+
+          <!-- Comparison (Advanced retry) -->
+          <div id="comparison-section" style="display:none">
+            <div class="section-title" style="margin-top:20px">Improvement Analysis</div>
+            <div class="improvement-pct">
+              <div class="pct" id="improvement-pct">+0%</div>
+              <div style="font-size:12px;color:var(--text-muted);letter-spacing:1px">SCORE IMPROVEMENT</div>
+            </div>
+          </div>
+
+          <div style="margin-top:16px">
+            <div id="retry-section" style="display:none">
+              <button class="retry-btn" onclick="retryPrompt()">🔄 Refine & Retry (Unlimited)</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PROGRESS SCREEN -->
+    <div id="screen-progress" class="screen">
+      <div class="dashboard-header">
+        <h1 style="font-size:28px">Your Progress</h1>
+        <p>Track your mastery journey</p>
+      </div>
+      <div class="stats-grid" style="grid-template-columns:repeat(2,1fr)">
+        <div class="stat-card">
+          <div class="stat-value" style="color:var(--neon-cyan)" id="prog-total">0</div>
+          <div class="stat-label">Total Prompts</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value" style="color:var(--neon-green)" id="prog-xp">0</div>
+          <div class="stat-label">Total XP</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value" style="color:var(--neon-orange)" id="prog-streak">0</div>
+          <div class="stat-label">Day Streak 🔥</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value" style="color:var(--neon-purple)" id="prog-best">—</div>
+          <div class="stat-label">Best Score</div>
+        </div>
+      </div>
+
+      <div class="section-title">Badges Earned</div>
+      <div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:24px" id="badges-container">
+        <div style="background:var(--bg-glass);border:1px solid var(--border-glow);border-radius:10px;padding:12px 16px;text-align:center;opacity:0.4">
+          <div style="font-size:28px">🎯</div>
+          <div style="font-size:10px;color:var(--text-muted);margin-top:4px;letter-spacing:1px">FIRST PROMPT</div>
+        </div>
+        <div style="background:var(--bg-glass);border:1px solid var(--border-glow);border-radius:10px;padding:12px 16px;text-align:center;opacity:0.4" id="badge-scorer">
+          <div style="font-size:28px">⭐</div>
+          <div style="font-size:10px;color:var(--text-muted);margin-top:4px;letter-spacing:1px">HIGH SCORER</div>
+        </div>
+        <div style="background:var(--bg-glass);border:1px solid var(--border-glow);border-radius:10px;padding:12px 16px;text-align:center;opacity:0.4" id="badge-streak">
+          <div style="font-size:28px">🔥</div>
+          <div style="font-size:10px;color:var(--text-muted);margin-top:4px;letter-spacing:1px">3-DAY STREAK</div>
+        </div>
+        <div style="background:var(--bg-glass);border:1px solid var(--border-glow);border-radius:10px;padding:12px 16px;text-align:center;opacity:0.4" id="badge-advanced">
+          <div style="font-size:28px">🚀</div>
+          <div style="font-size:10px;color:var(--text-muted);margin-top:4px;letter-spacing:1px">ADVANCED</div>
+        </div>
+      </div>
+
+      <div class="section-title">Recent Activity</div>
+      <div id="activity-log"></div>
+    </div>
+  </main>
+
+  <!-- BOTTOM NAV -->
+  <nav class="bottom-nav">
+    <div class="nav-item active" id="nav-home" onclick="showScreen('dashboard','nav-home')">
+      <span class="nav-icon">🏠</span>HOME
+    </div>
+    <div class="nav-item" id="nav-play" onclick="showScreen('dashboard','nav-home')">
+      <span class="nav-icon">⚡</span>PLAY
+    </div>
+    <div class="nav-item" id="nav-prog" onclick="showScreen('progress','nav-prog')">
+      <span class="nav-icon">📊</span>PROGRESS
+    </div>
+    <div class="nav-item" id="nav-lb" onclick="showScreen('dashboard','nav-lb');setTimeout(()=>document.getElementById('leaderboard-list').scrollIntoView({behavior:'smooth'}),100)">
+      <span class="nav-icon">🏆</span>RANKS
+    </div>
+  </nav>
+</div>
+
+<script>
+// ============================================================
+// STATE
+// ============================================================
+const state = {
+  level: 'beginner',
+  xp: 0,
+  streak: 3,
+  promptCount: 0,
+  scores: [],
+  lastScore: null,
+  retryCount: 0,
+  activity: [],
+  loading: false
+};
+
+// ============================================================
+// NAVIGATION
+// ============================================================
+function showScreen(name, navId) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  const s = document.getElementById('screen-' + name);
+  const n = document.getElementById(navId);
+  if (s) s.classList.add('active');
+  if (n) n.classList.add('active');
+  updateProgressScreen();
+}
+
+function openPlayground(level) {
+  state.level = level;
+  state.retryCount = 0;
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById('screen-playground').classList.add('active');
+  
+  // Show correct UI
+  ['beginner','intermediate','advanced'].forEach(l => {
+    document.getElementById('ui-' + l).style.display = l === level ? 'block' : 'none';
+  });
+  
+  // Reset result area
+  document.getElementById('result-area').style.display = 'none';
+  document.getElementById('loading-area').classList.remove('active');
+  
+  // Level badge
+  const badge = document.getElementById('level-badge-display');
+  badge.className = 'level-badge badge-' + level;
+  badge.textContent = level.toUpperCase();
+  
+  document.getElementById('pg-xp-display').textContent = '⚡ ' + state.xp + ' XP';
+  
+  // Setup intermediate preview
+  if (level === 'intermediate') setupIntermediatePreview();
+}
+
+function goBack() {
+  showScreen('dashboard', 'nav-home');
+}
+
+// ============================================================
+// INTERMEDIATE PREVIEW
+// ============================================================
+function setupIntermediatePreview() {
+  const fields = ['int-role','int-goal','int-context','int-constraints'];
+  fields.forEach(f => {
+    document.getElementById(f).addEventListener('input', updateIntPreview);
+  });
+}
+
+function updateIntPreview() {
+  const role = document.getElementById('int-role').value;
+  const goal = document.getElementById('int-goal').value;
+  const context = document.getElementById('int-context').value;
+  const constraints = document.getElementById('int-constraints').value;
+  
+  let preview = '';
+  if (role) preview += `Act as ${role}. `;
+  if (goal) preview += `Your goal is ${goal}. `;
+  if (context) preview += `Context: ${context}. `;
+  if (constraints) preview += `Constraints: ${constraints}.`;
+  
+  document.getElementById('int-preview').textContent = preview || 'Your prompt preview will appear here...';
+}
+
+function buildIntermediatePrompt() {
+  const role = document.getElementById('int-role').value;
+  const goal = document.getElementById('int-goal').value;
+  const context = document.getElementById('int-context').value;
+  const constraints = document.getElementById('int-constraints').value;
+  
+  let prompt = '';
+  if (role) prompt += `Act as ${role}. `;
+  if (goal) prompt += `Your goal is ${goal}. `;
+  if (context) prompt += `Context: ${context}. `;
+  if (constraints) prompt += `Constraints: ${constraints}.`;
+  return prompt.trim();
+}
+
+// ============================================================
+// RULE-BASED PRE-EVALUATION
+// ============================================================
+function ruleBasedScore(prompt) {
+  let score = 0;
+  const p = prompt.toLowerCase();
+  
+  // Length check
+  if (prompt.length > 20) score += 1;
+  if (prompt.length > 60) score += 1;
+  if (prompt.length > 120) score += 1;
+  
+  // Role presence
+  if (p.includes('act as') || p.includes('you are') || p.includes('as a') || p.includes('as an')) score += 1;
+  
+  // Goal/task clarity
+  if (p.includes('goal') || p.includes('task') || p.includes('help me') || p.includes('create') || p.includes('write') || p.includes('explain') || p.includes('analyze')) score += 1;
+  
+  // Constraints
+  if (p.includes('in ') && (p.includes('words') || p.includes('sentences') || p.includes('points'))) score += 1;
+  if (p.includes('avoid') || p.includes('without') || p.includes('do not') || p.includes("don't")) score += 1;
+  
+  // Output format
+  if (p.includes('format') || p.includes('list') || p.includes('bullet') || p.includes('table') || p.includes('json') || p.includes('markdown')) score += 1;
+  
+  // Context
+  if (p.includes('context') || p.includes('background') || p.includes('because') || p.includes('for a') || p.includes('for my')) score += 1;
+  
+  // Examples
+  if (p.includes('example') || p.includes('such as') || p.includes('like:') || p.includes('e.g.')) score += 1;
+  
+  return Math.min(score, 5); // Max 5 from rule-based (50% of score)
+}
+
+// ============================================================
+// AI EVALUATION
+// ============================================================
+async function evaluatePrompt(level) {
+  let promptText = '';
+  const errorEl = document.getElementById(level + '-error');
+  errorEl.style.display = 'none';
+  
+  if (level === 'beginner') {
+    promptText = document.getElementById('beginner-input').value.trim();
+    if (!promptText) { errorEl.textContent = 'Please enter a prompt to evaluate.'; errorEl.style.display = 'block'; return; }
+  } else if (level === 'intermediate') {
+    promptText = buildIntermediatePrompt();
+    if (promptText.length < 20) { errorEl.textContent = 'Please fill in at least Role and Goal fields.'; errorEl.style.display = 'block'; return; }
+  } else {
+    promptText = document.getElementById('advanced-input').value.trim();
+    if (!promptText) { errorEl.textContent = 'Please enter a prompt to evaluate.'; errorEl.style.display = 'block'; return; }
+  }
+
+  // UI: show loading
+  document.getElementById('ui-' + level).style.display = 'none';
+  document.getElementById('result-area').style.display = 'none';
+  const loadingEl = document.getElementById('loading-area');
+  loadingEl.classList.add('active');
+  
+  const loadingMsgs = [
+    '🧠 ANALYZING PROMPT...',
+    '⚡ RUNNING AI EVALUATION...',
+    '📊 CALCULATING SCORE...',
+    '🚀 GENERATING FEEDBACK...'
+  ];
+  let msgIdx = 0;
+  const msgInterval = setInterval(() => {
+    document.getElementById('loading-text').textContent = loadingMsgs[msgIdx % loadingMsgs.length];
+    msgIdx++;
+  }, 1200);
+
+  const ruleScore = ruleBasedScore(promptText);
+  const previousScore = state.lastScore;
+
+  try {
+    const systemPrompt = buildSystemPrompt(level);
+    const userMsg = `Evaluate this prompt:\n\n"${promptText}"\n\nRespond ONLY with valid JSON matching the schema exactly.`;
+    
+    const response = await fetch(
+  "/evaluate-prompt",
+  {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      user_id: "user123",
+      prompt: promptText,
+    }),
+  }
+);
+
+const backendData = await response.json();
+// 🔥 SAVE PROMPT TO DATABASE
+await fetch("/save-prompt", {
+  method: "POST",
+  headers: {
+    "Content-Type": "application/json",
+  },
+  body: JSON.stringify({
+    user_id: "user123",
+    prompt: promptText,
+  }),
+});
+// Convert backend response → your UI format
+let result = {
+  score: backendData.data?.final_score || 5,
+  finalScore: backendData.data?.final_score || 5,
+  feedback: [backendData.data?.llm?.clarity || "Good prompt"],
+  improvements: [backendData.data?.llm?.improvement || "Try improving clarity"],
+  strengths: ["Nice structure"]
+};
+
+
+    clearInterval(msgInterval);
+    loadingEl.classList.remove('active');
+    
+    // Combine rule-based + LLM score (50/50)
+    const llmScore = Math.max(0, Math.min(10, result.score || 5));
+    const finalScore = Math.round((ruleScore + llmScore) / 2 * 10) / 10;
+    result.finalScore = finalScore;
+    result.ruleScore = ruleScore;
+    
+    // Update state
+    state.lastScore = finalScore;
+    state.promptCount++;
+    state.scores.push(finalScore);
+    const xpEarned = Math.round(finalScore * 10) + (level === 'advanced' ? 20 : level === 'intermediate' ? 10 : 0);
+    state.xp += xpEarned;
+    state.activity.unshift({ level, score: finalScore, xp: xpEarned, time: new Date().toLocaleTimeString(), prompt: promptText.substring(0, 60) + '...' });
+    
+    updateNavStats();
+    displayResults(result, level, xpEarned, previousScore);
+    
+  } catch(err) {
+    clearInterval(msgInterval);
+    loadingEl.classList.remove('active');
+    document.getElementById('ui-' + level).style.display = 'block';
+    errorEl.textContent = 'AI evaluation failed: ' + (err.message || 'Please try again.');
+    errorEl.style.display = 'block';
+  }
+}
+
+function buildSystemPrompt(level) {
+  const baseInstruction = `You are PromptMaster AI, an expert prompt engineering evaluator. Analyze the given prompt and respond ONLY with a JSON object. No markdown, no explanation outside the JSON.`;
+  
+  if (level === 'beginner') {
+    return `${baseInstruction}
+JSON schema:
+{
+  "score": <number 1-10, the LLM quality score>,
+  "grade": <"poor"|"fair"|"good"|"excellent">,
+  "feedback": [<string>, <string>, <string>],
+  "strengths": [<string>],
+  "improvements": [<string>, <string>]
+}`;
+  } else if (level === 'intermediate') {
+    return `${baseInstruction}
+JSON schema:
+{
+  "score": <number 1-10>,
+  "grade": <"poor"|"fair"|"good"|"excellent">,
+  "feedback": [<string>, <string>, <string>],
+  "strengths": [<string>, <string>],
+  "improvements": [<string>, <string>],
+  "suggestions": {
+    "role": <suggested improvement for role if any, or null>,
+    "goal": <suggested improvement for goal if any, or null>
+  }
+}`;
+  } else {
+    return `${baseInstruction}
+JSON schema:
+{
+  "score": <number 1-10, overall LLM quality>,
+  "dimensions": {
+    "clarity": <number 1-10>,
+    "context": <number 1-10>,
+    "constraints": <number 1-10>,
+    "outputFormat": <number 1-10>
+  },
+  "grade": <"poor"|"fair"|"good"|"excellent"|"masterful">,
+  "feedback": [<string>, <string>, <string>],
+  "strengths": [<string>, <string>],
+  "improvements": [<string>, <string>],
+  "optimizedPrompt": <a significantly improved version of the prompt>
+}`;
+  }
+}
+
+// ============================================================
+// DISPLAY RESULTS
+// ============================================================
+function displayResults(result, level, xpEarned, previousScore) {
+  document.getElementById('result-area').style.display = 'block';
+  
+  const score = result.finalScore;
+  const scoreColor = score >= 8 ? 'var(--neon-green)' : score >= 6 ? 'var(--neon-cyan)' : score >= 4 ? 'var(--intermediate)' : 'var(--neon-pink)';
+  
+  // Animate score ring
+  const arc = document.getElementById('score-arc');
+  const circumference = 326.7;
+  const offset = circumference - (score / 10) * circumference;
+  setTimeout(() => {
+  arc.style.strokeDashoffset = offset;
+  arc.style.stroke = scoreColor;
+
+  // 🔥 glow effect
+  arc.style.filter = `drop-shadow(0 0 10px ${scoreColor})`;
+  }, 100);
+  
+  // Score number animate
+  const scoreEl = document.getElementById('score-display');
+  scoreEl.style.color = scoreColor;
+  scoreEl.style.textShadow = `0 0 15px ${scoreColor}`;
+  let current = 0;
+  const target = score;
+  const interval = setInterval(() => {
+    current += 0.2;
+    scoreEl.textContent = Math.min(current, target).toFixed(1);
+    if (current >= target) { clearInterval(interval); scoreEl.textContent = target; }
+  }, 50);
+  
+  // XP badge
+  document.getElementById('xp-gained-badge').innerHTML = `<div class="xp-gained">⚡ +${xpEarned} XP</div>`;
+  
+  // Advanced dimensions
+  if (level === 'advanced' && result.dimensions) {
+    document.getElementById('result-dimensions').style.display = 'grid';
+    const dims = result.dimensions;
+    setTimeout(() => {
+      setDim('rdim-clarity', dims.clarity);
+      setDim('rdim-context', dims.context);
+      setDim('rdim-constraints', dims.constraints);
+      setDim('rdim-format', dims.outputFormat);
+    }, 300);
+  } else {
+    document.getElementById('result-dimensions').style.display = 'none';
+  }
+  
+  // Feedback
+  const feedbackEl = document.getElementById('feedback-list');
+  feedbackEl.innerHTML = '';
+  const allFeedback = [
+    ...(result.strengths || []).map(s => ({ icon: '✅', text: s })),
+    ...(result.improvements || []).map(s => ({ icon: '💡', text: s })),
+    ...(result.feedback || []).map(s => ({ icon: '🔍', text: s }))
+  ];
+  allFeedback.slice(0, 6).forEach(f => {
+    feedbackEl.innerHTML += `
+  <div class="feedback-item">
+    <span class="feedback-icon">${f.icon}</span>
+    <span style="letter-spacing:0.5px">${f.text}</span>
+  </div>
+`;
+  });
+  
+  // Intermediate suggestions
+  if (level === 'intermediate' && result.suggestions) {
+    if (result.suggestions.role) {
+      feedbackEl.innerHTML += `<div class="feedback-item"><span class="feedback-icon">🎭</span><span><strong>Role suggestion:</strong> ${result.suggestions.role}</span></div>`;
+    }
+    if (result.suggestions.goal) {
+      feedbackEl.innerHTML += `<div class="feedback-item"><span class="feedback-icon">🎯</span><span><strong>Goal suggestion:</strong> ${result.suggestions.goal}</span></div>`;
+    }
+  }
+  
+  // Optimized prompt (Advanced)
+  if (level === 'advanced' && result.optimizedPrompt) {
+    document.getElementById('improved-section').style.display = 'block';
+    document.getElementById('improved-prompt-text').textContent = result.optimizedPrompt;
+  } else {
+    document.getElementById('improved-section').style.display = 'none';
+  }
+  
+  // Comparison (Advanced retry)
+  if (level === 'advanced' && previousScore !== null && state.retryCount > 0) {
+    document.getElementById('comparison-section').style.display = 'block';
+    const pct = ((score - previousScore) / previousScore * 100).toFixed(0);
+    const pctEl = document.getElementById('improvement-pct');
+    pctEl.textContent = (pct > 0 ? '+' : '') + pct + '%';
+    pctEl.style.color = pct >= 0 ? 'var(--neon-green)' : 'var(--neon-pink)';
+  } else {
+    document.getElementById('comparison-section').style.display = 'none';
+  }
+  
+  // Retry button (Advanced only)
+  document.getElementById('retry-section').style.display = level === 'advanced' ? 'block' : 'none';
+}
+
+function setDim(id, val) {
+  const el = document.getElementById(id);
+  const fillEl = document.getElementById(id.replace('rdim-', 'rdim-') + '-fill');
+  if (el) el.textContent = val + '/10';
+  // Also set bar
+  const barId = id.replace('rdim-', 'rdim-') ;
+  const barFill = document.getElementById(barId.replace('val',''));
+  // Find the dimension fill bars in result-dimensions
+  const bars = { 'rdim-clarity': 'rdim-clarity', 'rdim-context': 'rdim-context', 'rdim-constraints': 'rdim-constraints', 'rdim-format': 'rdim-format' };
+  if (el) {
+    el.textContent = val + '/10';
+    const parent = el.parentElement;
+    const bar = parent.querySelector('.dimension-fill');
+    if (bar) bar.style.width = (val * 10) + '%';
+  }
+}
+
+// ============================================================
+// RETRY (Advanced)
+// ============================================================
+function retryPrompt() {
+  state.retryCount++;
+  document.getElementById('result-area').style.display = 'none';
+  document.getElementById('ui-advanced').style.display = 'block';
+  document.getElementById('adv-dimensions').style.display = 'none';
+  document.getElementById('advanced-input').focus();
+  
+  // Scroll to top
+  document.getElementById('screen-playground').scrollTop = 0;
+}
+
+// ============================================================
+// STATS UPDATE
+// ============================================================
+function updateNavStats() {
+  document.getElementById('nav-xp').textContent = state.xp;
+  document.getElementById('nav-streak').textContent = state.streak;
+  document.getElementById('pg-xp-display').textContent = '⚡ ' + state.xp + ' XP';
+  document.getElementById('lb-user-xp').textContent = state.xp;
+  
+  if (state.xp > 0) document.getElementById('user-leaderboard-row').style.display = 'flex';
+  
+  // Dashboard stats
+  document.getElementById('stat-prompts').textContent = state.promptCount;
+  const avg = state.scores.length ? (state.scores.reduce((a,b)=>a+b,0)/state.scores.length).toFixed(1) : '—';
+  const best = state.scores.length ? Math.max(...state.scores) : '—';
+  document.getElementById('stat-avg').textContent = avg;
+  document.getElementById('stat-best').textContent = best;
+}
+
+function updateProgressScreen() {
+  document.getElementById('prog-total').textContent = state.promptCount;
+  document.getElementById('prog-xp').textContent = state.xp;
+  document.getElementById('prog-streak').textContent = state.streak;
+  const best = state.scores.length ? Math.max(...state.scores) : '—';
+  document.getElementById('prog-best').textContent = best;
+  
+  // Badges
+  if (state.promptCount >= 1) document.querySelector('#badges-container div:first-child').style.opacity = '1';
+  if (state.scores.some(s => s >= 8)) document.getElementById('badge-scorer').style.opacity = '1';
+  if (state.streak >= 3) document.getElementById('badge-streak').style.opacity = '1';
+  if (state.level === 'advanced') document.getElementById('badge-advanced').style.opacity = '1';
+  
+  // Activity log
+  const actEl = document.getElementById('activity-log');
+  if (state.activity.length === 0) {
+    actEl.innerHTML = '<div style="color:var(--text-muted);font-size:13px;padding:20px;text-align:center">No activity yet. Start practicing!</div>';
+    return;
+  }
+  actEl.innerHTML = state.activity.slice(0, 5).map(a => `
+    <div class="leaderboard-item">
+      <div class="level-badge badge-${a.level}" style="font-size:10px;padding:2px 8px">${a.level.toUpperCase()}</div>
+      <div style="flex:1;font-size:13px;color:var(--text-muted)">${a.prompt}</div>
+      <div style="font-family:'Orbitron',monospace;font-size:12px;color:${a.score>=7?'var(--neon-green)':'var(--intermediate)'}">
+        ${a.score}/10
+      </div>
+      <div class="lb-xp" style="font-size:11px">+${a.xp} XP</div>
+    </div>
+  `).join('');
+}
+const particles = document.querySelector('.particles');
+
+for (let i = 0; i < 30; i++) {
+  const dot = document.createElement('span');
+  dot.style.left = Math.random() * 100 + '%';
+  dot.style.animationDuration = (5 + Math.random() * 10) + 's';
+  particles.appendChild(dot);
+}
+</script>
+</body>
+</html>
