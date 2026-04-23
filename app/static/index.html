@@ -759,6 +759,15 @@
       <div class="section-title">Recent Activity</div>
       <div id="activity-log"></div>
     </div>
+    <!-- HISTORY SCREEN -->
+    <div id="screen-history" class="screen">
+      <div class="dashboard-header">
+        <h1 style="font-size:28px">📜 History</h1>
+        <p>Your past prompts</p>
+      </div>
+
+      <div id="history-list"></div>
+    </div>
   </main>
 
   <!-- BOTTOM NAV -->
@@ -774,6 +783,9 @@
     </div>
     <div class="nav-item" id="nav-lb" onclick="showScreen('dashboard','nav-lb');setTimeout(()=>document.getElementById('leaderboard-list').scrollIntoView({behavior:'smooth'}),100)">
       <span class="nav-icon">🏆</span>RANKS
+    </div>
+    <div class="nav-item" onclick="loadHistory()">
+      <span class="nav-icon">📜</span>HISTORY
     </div>
   </nav>
 </div>
@@ -1253,6 +1265,36 @@ for (let i = 0; i < 30; i++) {
   dot.style.left = Math.random() * 100 + '%';
   dot.style.animationDuration = (5 + Math.random() * 10) + 's';
   particles.appendChild(dot);
+}
+async function loadHistory() {
+
+  // 🔥 Switch to history screen
+  showScreen('history', 'nav-home');
+
+  const response = await fetch("/get-history");
+  const data = await response.json();
+
+  const historyList = document.getElementById("history-list");
+  historyList.innerHTML = "";
+
+  if (!data.data || data.data.length === 0) {
+    historyList.innerHTML = `
+      <div style="color:#888;text-align:center;padding:20px;">
+        No history found
+      </div>
+    `;
+    return;
+  }
+
+  data.data.forEach((item) => {
+    historyList.innerHTML += `
+      <div class="leaderboard-item">
+        <div style="flex:1;font-size:14px;">
+          ${item.prompt}
+        </div>
+      </div>
+    `;
+  });
 }
 </script>
 </body>

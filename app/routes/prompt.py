@@ -13,3 +13,13 @@ async def save_prompt(data: PromptRequest):
     }).execute()
 
     return {"status": "saved", "data": response.data}
+
+@router.get("/get-history")
+async def get_history():
+
+    response = supabase.table("prompts").select("*").execute()
+
+    return {
+        "status": "success",
+        "data": response.data
+    }
