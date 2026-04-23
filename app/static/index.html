@@ -982,16 +982,23 @@ async function evaluatePrompt(level) {
 
 const backendData = await response.json();
 // 🔥 SAVE PROMPT TO DATABASE
-await fetch("/save-prompt", {
-  method: "POST",
-  headers: {
-    "Content-Type": "application/json",
-  },
-  body: JSON.stringify({
-    user_id: "user123",
-    prompt: promptText,
-  }),
-});
+try {
+  await fetch("/save-prompt", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      user_id: "user123",
+      prompt: promptText,
+    }),
+  });
+
+  console.log("✅ Saved to DB");
+
+} catch (err) {
+  console.log("❌ Save failed", err);
+}
 // Convert backend response → your UI format
 let result = {
   score: backendData.data?.final_score || 5,
